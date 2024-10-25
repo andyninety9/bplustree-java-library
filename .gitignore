@@ -1,0 +1,15 @@
+# Gradle files
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Logs and temporary files
+*.log
+*.tmp
+.DS_Store
