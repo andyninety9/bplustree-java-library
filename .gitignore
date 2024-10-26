@@ -13,3 +13,5 @@ out/
 *.log
 *.tmp
 .DS_Store
+# Ignore dataset folder in test/resources
+/lib/src/test/resources/dataset/

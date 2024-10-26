@@ -1,54 +1,66 @@
 /*
  * This is the build configuration file for the B+ Tree Library project.
- * It utilizes Kotlin DSL for Gradle to manage dependencies, build tasks,
- * and toolchain configuration for optimal compatibility.
+ * It generates a fat JAR that contains:
+ * - Compiled code
+ * - Source code
+ * - Javadoc documentation
  */
 
 plugins {
-    // Apply the Java Library plugin to manage API and implementation separation.
+    // Java library plugin for API/implementation separation.
     `java-library`
+
+    // Shadow plugin to create fat JARs.
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
+group = "org.bptree"  // Set the project group (namespace).
+version = "1.0.0"  // Set the version of the library.
+
 repositories {
-    // Define Maven Central as the repository to resolve project dependencies.
+    // Use Maven Central to resolve dependencies.
     mavenCentral()
 }
 
 dependencies {
-    // JUnit Jupiter (JUnit 5) is included for unit testing.
-    // The API is used at compile time to write tests.
+    // JUnit 5 for unit testing.
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.3")
-
-    // The engine is only required at runtime to execute the tests.
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.3")
-}
-
-testing {
-    suites {
-        // Configure the JVM-based test suite to use JUnit Jupiter.
-        val test by getting(JvmTestSuite::class) {
-            // Ensure that the JUnit Jupiter engine is used for all test cases.
-            useJUnitJupiter()
-        }
-    }
 }
 
 java {
     toolchain {
-        // Use Java 17 for this project to ensure compatibility and long-term support.
-        languageVersion = JavaLanguageVersion.of(17)
+        // Use Java 17 for this project.
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 
-    // Generate a JAR file containing the project’s source code.
+    // Include source code and Javadoc in the build.
     withSourcesJar()
-
-    // Generate a JAR file containing the project’s Javadoc documentation.
     withJavadocJar()
 }
 
-/*
- * This Gradle build script follows best practices:
- * 1. Dependencies are properly scoped (testImplementation and testRuntimeOnly).
- * 2. Java toolchain ensures consistent builds across different environments.
- * 3. Separate JARs for source code and documentation improve code distribution.
- */
+tasks {
+    // Configure the shadowJar task to create a fat JAR.
+    named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+        archiveBaseName.set("bplustree-library")  // Set the base name.
+        archiveClassifier.set("")  // No classifier, this is the main JAR.
+        archiveVersion.set(provider { version.toString() })  // Set version dynamically.
+    }
+
+    // Ensure tests run with the JUnit platform and increase heap memory for JVM.
+    test {
+        useJUnitPlatform()
+        maxHeapSize = "2g"  // Set max heap size to 2GB.
+        jvmArgs("-Xms512m", "-Xmx2g", "-Xss1m")  // Configure JVM memory options.
+
+        testLogging {
+            // Show detailed test output on the console.
+            events("passed", "skipped", "failed")
+        }
+    }
+
+    // Ensure warnings and unchecked operations are displayed.
+    withType<JavaCompile> {
+        options.compilerArgs.addAll(listOf("-Xlint:unchecked", "-Xlint:deprecation"))
+    }
+}
