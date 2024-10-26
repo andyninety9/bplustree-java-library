@@ -1,6 +1,7 @@
 package org.bptree;
 
 import org.bptree.utils.FileUtils;
+import org.bptree.utils.SortUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,7 @@ public class PerformanceTest {
 
     // Path to the dataset (relative to src/test/resources)
     private static final String DATASET_PATH = "/dataset/dataset_100mb.csv";
-    private static final int TREE_ORDER = 5;  // Order of the BPlusTree
+    private static final int TREE_ORDER = 100;  // Order of the BPlusTree
 
     private static List<Long> keys;  // Store the dataset keys for all tests
 
@@ -44,23 +45,30 @@ public class PerformanceTest {
     }
 
     /**
-     * Test to measure the performance of the bottom-up method.
+     * Test to measure the performance of sorting and tree construction separately.
      */
     @Test
-    public void testBottomUpPerformance() throws InterruptedException, ExecutionException {
-        // Step 3: Create a BPlusTree with the specified order
+    public void testSortAndBottomUpPerformance() throws InterruptedException, ExecutionException {
+        // Step 1: Measure the time for sorting the keys
+        long sortStartTime = System.nanoTime();
+        List<Long> sortedKeys = SortUtils.mergeSort(keys);  // Sort the keys
+        long sortEndTime = System.nanoTime();
+
+        long sortDurationMillis = (sortEndTime - sortStartTime) / 1_000_000;
+        System.out.println("Sorting took: " + sortDurationMillis + " ms");
+
+        // Step 2: Create a BPlusTree with the specified order
         BPlusTree<Long> bplusTree = new BPlusTree<>(TREE_ORDER);
 
-        // Step 4: Measure the time for bottom-up tree construction
-        long startTime = System.nanoTime();
-        bplusTree.bottom_up_method(keys);  // Build the tree
-        long endTime = System.nanoTime();
+        // Step 3: Measure the time for bottom-up tree construction
+        long buildStartTime = System.nanoTime();
+        bplusTree.bottom_up_method(sortedKeys);  // Build the tree
+        long buildEndTime = System.nanoTime();
 
-        // Step 5: Calculate and print the elapsed time
-        long durationInMillis = (endTime - startTime) / 1_000_000;
-        System.out.println("Bottom-up tree construction took: " + durationInMillis + " ms");
+        long buildDurationMillis = (buildEndTime - buildStartTime) / 1_000_000;
+        System.out.println("Bottom-up tree construction took: " + buildDurationMillis + " ms");
 
-        // Step 6: Validate the tree structure
+        // Step 4: Validate the tree structure
         assertNotNull(bplusTree.getRoot(), "The root node should not be null.");
         assertTrue(bplusTree.getHeight() > 0, "The tree height should be greater than 0.");
         System.out.println("Tree height: " + bplusTree.getHeight());
