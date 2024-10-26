@@ -47,15 +47,20 @@ tasks {
         archiveVersion.set(provider { version.toString() })  // Set version dynamically.
     }
 
-    // Ensure tests run with the JUnit platform.
+    // Ensure tests run with the JUnit platform and increase heap memory for JVM.
     test {
         useJUnitPlatform()
+        maxHeapSize = "2g"  // Set max heap size to 2GB.
+        jvmArgs("-Xms512m", "-Xmx2g", "-Xss1m")  // Configure JVM memory options.
+
+        testLogging {
+            // Show detailed test output on the console.
+            events("passed", "skipped", "failed")
+        }
+    }
+
+    // Ensure warnings and unchecked operations are displayed.
+    withType<JavaCompile> {
+        options.compilerArgs.addAll(listOf("-Xlint:unchecked", "-Xlint:deprecation"))
     }
 }
-
-/*
- * Usage:
- * 1. Run `./gradlew shadowJar` to build the fat JAR.
- * 2. The output will be located in `build/libs/`.
- * 3. The fat JAR includes compiled code, source code, and Javadoc.
- */
