@@ -16,6 +16,15 @@ public class BPlusTree<T> {
     private final int order;  // Order (degree) of the B+ Tree
 
     /**
+     * Returns the root node of the B+ Tree.
+     *
+     * @return the root node
+     */
+    public Node<T> getRoot() {
+        return root;
+    }
+
+    /**
      * Constructs a BPlusTree with the specified order.
      *
      * @param order the order of the B+ tree, must be at least 3
@@ -137,12 +146,4 @@ public class BPlusTree<T> {
         return height;
     }
 
-    /**
-     * Returns the root node of the B+ Tree.
-     *
-     * @return the root node
-     */
-    public Node<T> getRoot() {
-        return root;
-    }
 }
