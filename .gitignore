@@ -13,3 +13,4 @@ out/
 *.log
 *.tmp
 .DS_Store
+/lib/src/test/resources/dataset/

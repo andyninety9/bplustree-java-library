@@ -14,8 +14,8 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
-group = "org.bptree"  // Set project group (namespace).
-version = "1.0.0"  // Set the version of the project.
+group = "org.bptree"  // Set the project group (namespace).
+version = "1.0.0"  // Set the version of the library.
 
 repositories {
     // Use Maven Central to resolve dependencies.
@@ -41,15 +41,26 @@ java {
 
 tasks {
     // Configure the shadowJar task to create a fat JAR.
-    val shadowJar by getting(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar::class) {
-        archiveBaseName.set("bplustree-library")
+    named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+        archiveBaseName.set("bplustree-library")  // Set the base name.
         archiveClassifier.set("")  // No classifier, this is the main JAR.
-        archiveVersion.set(provider { version.toString() })
+        archiveVersion.set(provider { version.toString() })  // Set version dynamically.
+    }
+
+    // Ensure tests run with the JUnit platform and increase heap memory for JVM.
+    test {
+        useJUnitPlatform()
+        maxHeapSize = "2g"  // Set max heap size to 2GB.
+        jvmArgs("-Xms512m", "-Xmx2g", "-Xss1m")  // Configure JVM memory options.
+
+        testLogging {
+            // Show detailed test output on the console.
+            events("passed", "skipped", "failed")
+        }
+    }
+
+    // Ensure warnings and unchecked operations are displayed.
+    withType<JavaCompile> {
+        options.compilerArgs.addAll(listOf("-Xlint:unchecked", "-Xlint:deprecation"))
     }
 }
-
-/*
- * Usage:
- * 1. Run `./gradlew shadowJar` to build the fat JAR.
- * 2. The output will be located in `build/libs/`.
- */
