@@ -23,7 +23,7 @@ This is a generic B+ Tree implementation in Java. The library supports **any dat
 
 ### **Clone the Repository**
 ```bash
-git clone https://github.com/yourusername/bptree-library.git
+git clone https://github.com/andyninety9/bptree-library.git
 cd bptree-library
 ```
 
