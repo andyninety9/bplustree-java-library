@@ -9,9 +9,9 @@ import java.util.concurrent.*;
  *
  * @param <T> the type of keys stored in the tree nodes
  * @author andymai
- * @version 1.1
+ * @version 1.2
  */
-public class BPlusTree<T> {
+public class BPlusTree<T extends Comparable<T>> {
     private Node<T> root;  // Root node of the B+ Tree
     private final int order;  // Order (degree) of the B+ Tree
 
@@ -46,6 +46,10 @@ public class BPlusTree<T> {
      * @throws ExecutionException if an exception occurs during task execution
      */
     public void bottom_up_method(List<T> listData) throws InterruptedException, ExecutionException {
+        if (listData.isEmpty()) {
+            throw new IllegalArgumentException("Input data list should not be empty.");
+        }
+
         int availableThreads = Math.max(1, Runtime.getRuntime().availableProcessors() - 2);
         ExecutorService executor = Executors.newFixedThreadPool(availableThreads);
         List<Future<Node<T>>> futures = new ArrayList<>();
@@ -106,8 +110,13 @@ public class BPlusTree<T> {
      *
      * @param childNodes the list of child nodes
      * @return the root node of the constructed level
+     * @throws IllegalStateException if the child nodes list is empty
      */
     private Node<T> build_internal_levels(List<Node<T>> childNodes) {
+        if (childNodes.isEmpty()) {
+            throw new IllegalStateException("Child nodes list should not be empty.");
+        }
+
         if (childNodes.size() == 1) {
             return childNodes.get(0);  // If only one node remains, it becomes the root
         }
@@ -118,10 +127,23 @@ public class BPlusTree<T> {
         for (int i = 0; i < childNodes.size(); i++) {
             currentNode.getChildren().add(childNodes.get(i));  // Add child to current internal node
 
-            if (i % (order - 1) == (order - 2) || i == childNodes.size() - 1) {
-                internalNodes.add(currentNode);  // Add completed internal node
+            // Add the key from the first element of the next child node to act as the separator key
+            if (currentNode.getChildren().size() > 1 && i < childNodes.size() - 1) {
+                if (!childNodes.get(i + 1).getKeys().isEmpty()) {
+                    T key = childNodes.get(i + 1).getKeys().get(0);
+                    currentNode.getKeys().add(key);
+                }
+            }
+
+            // If the current node is full or we have reached the last child node, add the current node to the list
+            if (currentNode.getChildren().size() == order || i == childNodes.size() - 1) {
+                internalNodes.add(currentNode);
                 currentNode = new Node<>(false);  // Create a new internal node
             }
+        }
+
+        if (internalNodes.isEmpty()) {
+            throw new IllegalStateException("Internal nodes list should not be empty after building level.");
         }
 
         System.out.println("Built Internal Level with " + internalNodes.size() + " nodes.");
@@ -146,4 +168,34 @@ public class BPlusTree<T> {
         return height;
     }
 
+    /**
+     * Prints the structure of the B+ Tree.
+     */
+    public void printTreeStructure() {
+        if (root == null) {
+            System.out.println("The tree is empty.");
+        } else {
+            printNode(root, 0);
+        }
+    }
+
+    /**
+     * Recursively prints the given node and its children with indentation.
+     *
+     * @param node  the node to print
+     * @param level the current level in the tree (used for indentation)
+     */
+    private void printNode(Node<T> node, int level) {
+        StringBuilder indent = new StringBuilder();
+        for (int i = 0; i < level; i++) {
+            indent.append("  ");
+        }
+
+        System.out.println(indent + (node.isLeaf() ? "Leaf " : "Internal ") + "Node: " + node.getKeys());
+        if (!node.isLeaf()) {
+            for (Node<T> child : node.getChildren()) {
+                printNode(child, level + 1);
+            }
+        }
+    }
 }

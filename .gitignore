@@ -13,4 +13,8 @@ out/
 *.log
 *.tmp
 .DS_Store
+<<<<<<< HEAD
+=======
+# Ignore dataset folder in test/resources
+>>>>>>> origin/main
 /lib/src/test/resources/dataset/
