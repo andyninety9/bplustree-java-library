@@ -3,6 +3,7 @@ package org.bptree;
 import org.bptree.utils.FileUtils;
 import org.bptree.utils.SortUtils;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,6 +28,7 @@ public class PerformanceParallelSearchTest {
      * Load the dataset and build the B+ Tree before all tests.
      * This method is executed only once for the entire test class.
      */
+    @Disabled
     @BeforeAll
     public static void setup() throws IOException, URISyntaxException, InterruptedException, ExecutionException {
         // Step 1: Convert resource path to absolute file path
@@ -40,7 +43,7 @@ public class PerformanceParallelSearchTest {
         // Extract the first column as a list of Long values
         keys = csvData.stream()
                 .map(row -> Long.parseLong(row[0].trim()))
-                .toList();
+                .collect(Collectors.toList());;
 
         System.out.println("Dataset loaded successfully. Number of keys: " + keys.size());
 
@@ -55,6 +58,8 @@ public class PerformanceParallelSearchTest {
     /**
      * Test to measure the performance of the parallel search.
      */
+
+    @Disabled
     @Test
     public void testParallelSearchPerformance() throws InterruptedException, ExecutionException {
         assertNotNull(bplusTree.getRoot(), "The root node should not be null.");

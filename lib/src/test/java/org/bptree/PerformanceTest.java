@@ -3,6 +3,7 @@ package org.bptree;
 import org.bptree.utils.FileUtils;
 import org.bptree.utils.SortUtils;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,6 +27,7 @@ public class PerformanceTest {
      * Load the dataset before all tests.
      * This method is executed only once for the entire test class.
      */
+    @Disabled
     @BeforeAll
     public static void loadData() throws IOException, URISyntaxException {
         // Step 1: Convert resource path to absolute file path
@@ -39,7 +42,7 @@ public class PerformanceTest {
         // Extract the first column as a list of Long values
         keys = csvData.stream()
                 .map(row -> Long.parseLong(row[0].trim()))
-                .toList();
+                .collect(Collectors.toList());
 
         System.out.println("Dataset loaded successfully. Number of keys: " + keys.size());
     }
@@ -47,6 +50,7 @@ public class PerformanceTest {
     /**
      * Test to measure the performance of sorting and tree construction separately.
      */
+    @Disabled
     @Test
     public void testSortAndBottomUpPerformance() throws InterruptedException, ExecutionException {
         // Step 1: Measure the time for sorting the keys

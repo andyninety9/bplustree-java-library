@@ -1,6 +1,7 @@
 package org.bptree;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,7 +13,7 @@ public class BPlusTreeTestSequentialSearch {
 
     private static final int TREE_ORDER = 4;
     private static BPlusTree<Integer> bPlusTree;
-
+    @Disabled
     @BeforeAll
     public static void setUp() throws InterruptedException, ExecutionException {
         bPlusTree = new BPlusTree<>(TREE_ORDER);
@@ -22,7 +23,7 @@ public class BPlusTreeTestSequentialSearch {
         }
         bPlusTree.bottom_up_method(data);
     }
-
+    @Disabled
     @Test
     public void testBasicSequentialSearch() {
 

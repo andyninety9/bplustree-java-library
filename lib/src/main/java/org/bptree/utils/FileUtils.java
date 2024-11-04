@@ -31,11 +31,12 @@ public class FileUtils {
     }
 
     /**
-     * Reads a CSV file and returns its content as a list of string arrays.
+     * Reads a CSV file and returns a list of string arrays.
      *
      * @param filePath the path to the CSV file
-     * @return a list of string arrays, where each array is a row in the CSV
-     * @throws IOException if an I/O error occurs
+     * @param regex the delimiter regex used to split each line
+     * @return a list of string arrays, each array representing a line from the CSV file
+     * @throws IOException if an I/O error occurs while reading the file
      */
     public static List<String[]> readCSV(String filePath, String regex) throws IOException {
         List<String[]> data = new ArrayList<>();
