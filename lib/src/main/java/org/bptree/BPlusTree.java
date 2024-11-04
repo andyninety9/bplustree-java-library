@@ -1,6 +1,7 @@
 package org.bptree;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -151,6 +152,120 @@ public class BPlusTree<T extends Comparable<T>> {
     }
 
     /**
+     * Searches for a specific key in the B+ Tree using multithreading for faster access.
+     *
+     * @param key the key to search for
+     * @return true if the key is found, false otherwise
+     */
+    public boolean parallelSearch(T key) throws InterruptedException, ExecutionException {
+        if (root == null) {
+            return false;  // Tree is empty
+        }
+
+        ExecutorService executor = Executors.newCachedThreadPool();
+        try {
+            List<Callable<Boolean>> tasks = new ArrayList<>();
+            Node<T> currentNode = root;
+
+            // Traverse the tree from root to leaf
+            while (!currentNode.isLeaf()) {
+                int i = 0;
+                while (i < currentNode.getKeys().size() && key.compareTo(currentNode.getKeys().get(i)) >= 0) {
+                    i++;
+                }
+                currentNode = currentNode.getChildren().get(i);
+            }
+
+            // Create tasks to search for the key in each leaf node concurrently
+            Node<T> leafNode = currentNode;
+            while (leafNode != null) {
+                Node<T> finalLeafNode = leafNode;
+                tasks.add(() -> finalLeafNode.getKeys().contains(key));
+                leafNode = leafNode.getNext();
+            }
+
+            // Execute tasks concurrently and return if any task finds the key
+            List<Future<Boolean>> results = executor.invokeAll(tasks);
+            for (Future<Boolean> result : results) {
+                if (result.get()) {
+                    return true;
+                }
+            }
+        } finally {
+            executor.shutdown();
+        }
+
+        return false;
+    }
+
+    /**
+     * Searches for a specific key in the B+ Tree using a traditional sequential approach.
+     *
+     * @param key the key to search for
+     * @return true if the key is found, false otherwise
+     */
+    public boolean sequentialSearch(T key) {
+        if (root == null) {
+            System.out.println("Tree is empty.");
+            return false;  // Tree is empty
+        }
+        return recursiveSearch(root, key);
+    }
+
+    /**
+     * Recursive helper function for sequential search in the B+ Tree.
+     *
+     * @param currentNode the current node to search within
+     * @param key the key to search for
+     * @return true if the key is found, false otherwise
+     */
+    private boolean recursiveSearch(Node<T> currentNode, T key) {
+        // Nếu là leaf node, kiểm tra nếu khóa có trong node này
+        if (currentNode.isLeaf()) {
+            System.out.println("Checking leaf node: " + currentNode.getKeys());
+            return currentNode.getKeys().contains(key);
+        }
+
+        // In thông tin node nội bộ
+        System.out.println("Current internal node keys: " + currentNode.getKeys());
+
+        // Sử dụng `findChildIndex` để tìm vị trí của node con
+        int childIndex = findChildIndex(currentNode, key);
+
+        // Kiểm tra giới hạn của chỉ số con
+        if (childIndex >= currentNode.getChildren().size()) {
+            System.out.println("Out of bounds: No child at index " + childIndex);
+            return false;
+        }
+
+        System.out.println("Moving to child node at index " + childIndex);
+        return recursiveSearch(currentNode.getChildren().get(childIndex), key);
+    }
+
+    /**
+     * Finds the appropriate child index for a given key within an internal node using binary search.
+     *
+     * @param node the internal node
+     * @param key the key to locate
+     * @return the index of the child node to follow
+     */
+    private int findChildIndex(Node<T> node, T key) {
+        List<T> keys = node.getKeys();
+        int pos = Collections.binarySearch(keys, key);
+
+        // Nếu khóa được tìm thấy trong keys, đi đến child node bên trái của vị trí pos
+        if (pos >= 0) {
+            return pos;
+        } else {
+            // Nếu không tìm thấy, chuyển thành vị trí chèn thích hợp
+            int insertionPoint = -pos - 1;
+
+            // insertionPoint xác định `child node` có giá trị lớn hơn hoặc bằng key
+            return insertionPoint;
+        }
+    }
+
+    /**
      * Calculates the height of the B+ Tree.
      *
      * @return the height of the tree
@@ -175,27 +290,70 @@ public class BPlusTree<T extends Comparable<T>> {
         if (root == null) {
             System.out.println("The tree is empty.");
         } else {
-            printNode(root, 0);
+            System.out.println("B+ Tree Structure:");
+            printNode(root, 0, null);
         }
     }
 
     /**
-     * Recursively prints the given node and its children with indentation.
+     * Recursively prints the given node and its children with indentation, including links to child nodes.
      *
      * @param node  the node to print
      * @param level the current level in the tree (used for indentation)
+     * @param parent the parent node if applicable (used for indicating relationships)
      */
-    private void printNode(Node<T> node, int level) {
+    private void printNode(Node<T> node, int level, Node<T> parent) {
         StringBuilder indent = new StringBuilder();
         for (int i = 0; i < level; i++) {
             indent.append("  ");
         }
 
-        System.out.println(indent + (node.isLeaf() ? "Leaf " : "Internal ") + "Node: " + node.getKeys());
+        // Print node type, keys, and parent info if applicable
+        System.out.println(indent + (node.isLeaf() ? "Leaf " : "Internal ") +
+                "Node " + node.getKeys() +
+                (parent != null ? " (Parent Keys: " + parent.getKeys() + ")" : ""));
+
         if (!node.isLeaf()) {
+            System.out.print(indent + "  Children Keys: ");
             for (Node<T> child : node.getChildren()) {
-                printNode(child, level + 1);
+                System.out.print(child.getKeys() + " ");
+            }
+            System.out.println();
+
+            // Recursively print each child
+            for (Node<T> child : node.getChildren()) {
+                printNode(child, level + 1, node);
+            }
+        } else {
+            // Print link to the next leaf node if it exists
+            if (node.getNext() != null) {
+                System.out.println(indent + "  --> Linked to next Leaf Node with keys: " + node.getNext().getKeys());
             }
         }
     }
+
+    /**
+     * Traverses through the leaf nodes and prints all keys in ascending order.
+     */
+    public void traverseLeaves() {
+        if (root == null) {
+            System.out.println("The tree is empty.");
+            return;
+        }
+
+        // Navigate to the leftmost leaf node
+        Node<T> currentNode = root;
+        while (!currentNode.isLeaf()) {
+            currentNode = currentNode.getChildren().get(0);  // Go to the first child in each internal node
+        }
+
+        // Traverse through all leaf nodes and print keys
+        System.out.print("Leaf nodes in ascending order: ");
+        while (currentNode != null) {
+            System.out.print(currentNode.getKeys() + " ");
+            currentNode = currentNode.getNext();  // Move to the next leaf node
+        }
+        System.out.println();
+    }
+
 }

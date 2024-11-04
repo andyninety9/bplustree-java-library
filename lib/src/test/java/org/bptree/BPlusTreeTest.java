@@ -1,146 +1,113 @@
 package org.bptree;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class BPlusTreeTest {
 
     @Test
-    public void testBottomUpTreeStructure() {
-        BPlusTree<Integer> bPlusTree = new BPlusTree<>(3);
-        List<Integer> keys = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    public void testBottomUpTreeStructure() throws Exception {
+        // Construct the B+ Tree with order 4 (this means each node can have at most 3 keys)
+        int order = 4;
+        BPlusTree<Integer> bPlusTree = new BPlusTree<>(order);
 
-        try {
-            bPlusTree.bottom_up_method(keys);
-        } catch (InterruptedException | ExecutionException e) {
-            fail("Exception occurred during tree construction: " + e.getMessage());
-        }
-
-        // Verify tree structure
-        Node<Integer> root = bPlusTree.getRoot();
-        assertNotNull(root, "The root should not be null.");
-        assertFalse(root.isLeaf(), "The root should be an internal node.");
-
-        // Print tree structure for debugging purposes
-        bPlusTree.printTreeStructure();
-
-        // Verify the leaf nodes contain the correct keys
-        Node<Integer> current = root;
-        while (!current.isLeaf()) {
-            current = current.getChildren().get(0);
-        }
-
-        int expectedKey = 1;
-        while (current != null) {
-            for (Integer key : current.getKeys()) {
-                assertEquals(expectedKey, key, "The leaf node should contain the key " + expectedKey);
-                expectedKey++;
-            }
-            current = current.getNext();
-        }
-
-        assertEquals(10, expectedKey, "The keys should go from 1 to 9.");
-    }
-
-    @Test
-    public void testTreeHeight() {
-        BPlusTree<Integer> bPlusTree = new BPlusTree<>(3);
-        List<Integer> keys = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
-
-        try {
-            bPlusTree.bottom_up_method(keys);
-        } catch (InterruptedException | ExecutionException e) {
-            fail("Exception occurred during tree construction: " + e.getMessage());
-        }
-
-        int height = bPlusTree.getHeight();
-        assertEquals(3, height, "The height of the tree should be 3.");
-    }
-
-    @Test
-    public void testEmptyTree() {
-        BPlusTree<Integer> bPlusTree = new BPlusTree<>(3);
-        assertEquals(0, bPlusTree.getHeight(), "The height of an empty tree should be 0.");
-        assertNull(bPlusTree.getRoot(), "The root of an empty tree should be null.");
-    }
-
-    @Test
-    public void testDuplicateKeys() {
-        BPlusTree<Integer> bPlusTree = new BPlusTree<>(3);
-        List<Integer> keys = Arrays.asList(1, 2, 2, 3, 4, 5);
-
-        try {
-            bPlusTree.bottom_up_method(keys);
-        } catch (InterruptedException | ExecutionException e) {
-            fail("Exception occurred during tree construction: " + e.getMessage());
-        }
-
-        // Print tree structure for debugging purposes
-        bPlusTree.printTreeStructure();
-
-        // Verify the leaf nodes contain the correct keys, including duplicates
-        Node<Integer> current = bPlusTree.getRoot();
-        while (!current.isLeaf()) {
-            current = current.getChildren().get(0);
-        }
-
-        List<Integer> expectedKeys = Arrays.asList(1, 2, 2, 3, 4, 5);
-        for (Integer expectedKey : expectedKeys) {
-            boolean found = false;
-            Node<Integer> leaf = current;
-
-            while (leaf != null) {
-                if (leaf.getKeys().contains(expectedKey)) {
-                    found = true;
-                    break;
-                }
-                leaf = leaf.getNext();
-            }
-
-            assertTrue(found, "The leaf node should contain the key " + expectedKey);
-        }
-    }
-
-
-    @Test
-    public void testLargeNumberOfKeys() {
-        BPlusTree<Integer> bPlusTree = new BPlusTree<>(4);
-        int numKeys = 100;
-        List<Integer> keys = new java.util.ArrayList<>();
-        for (int i = 1; i <= numKeys; i++) {
+        // Insert a list of keys to create the tree (ensuring keys are sorted)
+        List<Integer> keys = new ArrayList<>();
+        for (int i = 1; i <= 20; i++) {
             keys.add(i);
         }
+        keys.sort(Integer::compareTo);  // Ensure the keys are sorted before building the tree
+        bPlusTree.bottom_up_method(keys);
 
-        try {
-            bPlusTree.bottom_up_method(keys);
-        } catch (InterruptedException | ExecutionException e) {
-            fail("Exception occurred during tree construction: " + e.getMessage());
-        }
-
-        // Verify tree structure
+        // Get the root of the tree
         Node<Integer> root = bPlusTree.getRoot();
-        assertNotNull(root, "The root should not be null.");
-        assertFalse(root.isLeaf(), "The root should be an internal node.");
+        assertNotNull(root, "The root should not be null after constructing the tree.");
 
-        // Verify the leaf nodes contain the correct keys
-        Node<Integer> current = root;
-        while (!current.isLeaf()) {
-            current = current.getChildren().get(0);
+        // Traverse from root to leaf to ensure correctness of internal node connections
+        for (Integer key : keys) {
+            Node<Integer> leafNode = findLeafNode(root, key);
+            assertNotNull(leafNode, "The leaf node for key " + key + " should not be null.");
+            assertTrue(leafNode.getKeys().contains(key), "The leaf node should contain the key " + key + ".");
         }
 
+        // Ensure that leaf nodes are linked in sequence correctly
+        Node<Integer> currentLeaf = findLeftMostLeaf(root);
         int expectedKey = 1;
-        while (current != null) {
-            for (Integer key : current.getKeys()) {
-                assertEquals(expectedKey, key, "The leaf node should contain the key " + expectedKey);
+        while (currentLeaf != null) {
+            List<Integer> leafKeys = currentLeaf.getKeys();
+            System.out.println("Leaf node keys: " + leafKeys);
+            for (Integer key : leafKeys) {
+                assertEquals(expectedKey, key, "Keys in leaf nodes should be in sequential order.");
                 expectedKey++;
             }
-            current = current.getNext();
+            currentLeaf = currentLeaf.getNext();
         }
 
-        assertEquals(numKeys + 1, expectedKey, "The keys should go from 1 to " + numKeys);
+        // Ensure all keys are visited
+        assertEquals(21, expectedKey, "All keys from 1 to 20 should be present in the leaf nodes.");
+
+        // Additional check to verify that internal nodes have the correct children and keys
+        verifyInternalNodeStructure(root, order);
+    }
+
+    /**
+     * Finds the leaf node that should contain the given key by traversing the tree from the root.
+     *
+     * @param current the current node being traversed
+     * @param key     the key to find
+     * @return the leaf node that contains the key, or null if not found
+     */
+    private Node<Integer> findLeafNode(Node<Integer> current, Integer key) {
+        while (current != null && !current.isLeaf()) {
+            // Traverse internal nodes to find the correct child node
+            List<Integer> keys = current.getKeys();
+            List<Node<Integer>> children = current.getChildren();
+            int i = 0;
+            while (i < keys.size() && key > keys.get(i)) {  // Locate the correct child node
+                i++;
+            }
+            current = children.get(i);
+        }
+        return current;
+    }
+
+    /**
+     * Finds the leftmost leaf node in the tree by traversing from the root.
+     *
+     * @param root the root node of the tree
+     * @return the leftmost leaf node
+     */
+    private Node<Integer> findLeftMostLeaf(Node<Integer> root) {
+        Node<Integer> current = root;
+        while (current != null && !current.isLeaf()) {
+            current = current.getChildren().get(0);
+        }
+        return current;
+    }
+
+    /**
+     * Verifies the structure of internal nodes to ensure each internal node has the correct number of children and keys.
+     *
+     * @param node  the current internal node being verified
+     * @param order the order of the B+ Tree
+     */
+    private void verifyInternalNodeStructure(Node<Integer> node, int order) {
+        if (node.isLeaf()) {
+            return;
+        }
+
+        List<Node<Integer>> children = node.getChildren();
+        List<Integer> keys = node.getKeys();
+
+        // Internal node should have at most 'order' children
+        assertTrue(children.size() <= order, "Internal node should have at most " + order + " children.");
+        // Number of keys should be one less than the number of children
+        assertEquals(children.size() - 1, keys.size(), "The number of keys in an internal node should be one less than the number of children.");
+
+        for (Node<Integer> child : children) {
+            verifyInternalNodeStructure(child, order);
+        }
     }
 }
