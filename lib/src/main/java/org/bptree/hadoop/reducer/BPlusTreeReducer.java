@@ -22,7 +22,7 @@ public class BPlusTreeReducer {
      */
     public static class ReducePhase extends Reducer<Text, IntWritable, Text, Text> {
 
-        private static final int B_PLUS_TREE_ORDER = 10; // Order of the B+ Tree
+        private static final int B_PLUS_TREE_ORDER = 100; // Order of the B+ Tree
 
         /**
          * Processes each partition key and its associated values to build a B+ Tree.
