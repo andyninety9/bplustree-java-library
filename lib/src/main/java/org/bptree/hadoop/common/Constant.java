@@ -8,22 +8,22 @@ public interface Constant {
     /**
      * Maximum value for partition 1.
      */
-    int MAX_PARTITION1 = 2000000;
+    int MAX_PARTITION1 = 20000000;
 
     /**
      * Maximum value for partition 2.
      */
-    int MAX_PARTITION2 = 4000000;
+    int MAX_PARTITION2 = 40000000;
 
     /**
      * Maximum value for partition 3.
      */
-    int MAX_PARTITION3 = 6000000;
+    int MAX_PARTITION3 = 60000000;
 
     /**
      * Maximum value for partition 4.
      */
-    int MAX_PARTITION4 = 8000000;
+    int MAX_PARTITION4 = 80000000;
 
     /**
      * Key identifier for partition 1.

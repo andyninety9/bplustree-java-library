@@ -44,9 +44,13 @@ public class BPlusTreeJob {
         job.setMapperClass(BPlusTreeMapper.MapPhase.class);
         job.setReducerClass(BPlusTreeReducer.ReducePhase.class);
 
-        // Define output key and value types for the Reducer
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(Text.class);
+        // Define output key and value types for the Mapper
+        job.setMapOutputKeyClass(Text.class); // Output key type from Mapper
+        job.setMapOutputValueClass(IntWritable.class); // Output value type from Mapper
+
+        // Define output key and value types for the Reducer (final output)
+        job.setOutputKeyClass(Text.class); // Output key type from Reducer
+        job.setOutputValueClass(Text.class); // Output value type from Reducer
 
         // Set the input and output paths based on command-line arguments
         FileInputFormat.addInputPath(job, new Path(args[0])); // Input path for dataset
