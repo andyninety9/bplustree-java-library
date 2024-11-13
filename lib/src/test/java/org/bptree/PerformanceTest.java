@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PerformanceTest {
 
     // Path to the dataset (relative to src/test/resources)
-    private static final String DATASET_PATH = "/dataset/dataset_100mb.csv";
+    private static final String DATASET_PATH = "/dataset/dataset_300mb.csv";
     private static final int TREE_ORDER = 100;  // Order of the BPlusTree
 
     private static List<Long> keys;  // Store the dataset keys for all tests
@@ -27,7 +27,7 @@ public class PerformanceTest {
      * Load the dataset before all tests.
      * This method is executed only once for the entire test class.
      */
-    @Disabled
+
     @BeforeAll
     public static void loadData() throws IOException, URISyntaxException {
         // Step 1: Convert resource path to absolute file path
@@ -50,7 +50,6 @@ public class PerformanceTest {
     /**
      * Test to measure the performance of sorting and tree construction separately.
      */
-    @Disabled
     @Test
     public void testSortAndBottomUpPerformance() throws InterruptedException, ExecutionException {
         // Step 1: Measure the time for sorting the keys
