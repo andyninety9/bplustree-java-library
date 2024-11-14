@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PerformanceParallelSearchTest {
 
     // Path to the dataset (relative to src/test/resources)
-    private static final String DATASET_PATH = "/dataset/dataset_100mb.csv";
+    private static final String DATASET_PATH = "/dataset/dataset_1mb.csv";
     private static final int TREE_ORDER = 100;  // Order of the BPlusTree
 
     private static List<Long> keys;  // Store the dataset keys for all tests

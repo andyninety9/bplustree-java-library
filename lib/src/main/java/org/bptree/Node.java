@@ -1,5 +1,6 @@
 package org.bptree;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.List;
  * @author andymai
  * @version 1.0
  */
-public class Node<T> {
+public class Node<T> implements Serializable {
     private final boolean isLeaf;  // True for leaf nodes, False for internal nodes
     private final List<T> keys;  // List of keys stored in this node
     private final List<Node<T>> children;  // List of child nodes (only for internal nodes)

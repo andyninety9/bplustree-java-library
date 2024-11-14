@@ -1,5 +1,6 @@
 package org.bptree;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.concurrent.*;
  * Represents a B+ Tree with configurable order and generic data type.
  * @param <T> the type of keys stored in the tree nodes
  */
-public class BPlusTree<T extends Comparable<T>> {
+public class BPlusTree<T extends Comparable<T>> implements Serializable {
     private Node<T> root;  // Root node of the B+ Tree
     private final int order;  // Order (degree) of the B+ Tree
 
