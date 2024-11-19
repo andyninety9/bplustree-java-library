@@ -1,6 +1,7 @@
 /*
- * build.gradle.kts for the B+ Tree Library with integrated Hadoop support.
- * This configuration includes dependencies for Hadoop and configurations for fat JAR generation.
+ * build.gradle.kts for the B+ Tree Library with integrated Hadoop and Spark support.
+ * This configuration includes dependencies for Hadoop, Spark, Jackson for JSON processing,
+ * and configurations for creating a fat JAR using the Shadow plugin.
  */
 
 plugins {
@@ -27,11 +28,20 @@ dependencies {
     implementation("org.apache.hadoop:hadoop-common:3.3.4")
     implementation("org.apache.hadoop:hadoop-mapreduce-client-core:3.3.4")
     implementation("org.apache.hadoop:hadoop-hdfs:3.3.4")  // Optional: Hadoop HDFS if needed
+
+    // Spark dependencies
+    implementation("org.apache.spark:spark-core_2.12:3.5.3")
+    implementation("org.apache.spark:spark-sql_2.12:3.5.3")
+
+    // Jackson dependencies for JSON processing
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.13.3")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.13.3")
 }
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))  // Ensure Java 17 compatibility
+        languageVersion.set(JavaLanguageVersion.of(8))  // Ensure Java 8 compatibility
     }
 
     withSourcesJar()  // Include sources in the build
@@ -47,7 +57,7 @@ tasks {
 
         // Specify the main class for the jar manifest
         manifest {
-            attributes["Main-Class"] = "org.bptree.hadoop.BPlusTreeJob"  // Adjust to actual package of BPlusTreeJob
+            attributes["Main-Class"] = "org.bptree.hadoop.BPlusTreeJob"  // Adjust to actual package and main class
         }
 
         // Include all dependencies in the fat JAR

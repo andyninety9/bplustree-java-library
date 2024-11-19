@@ -73,7 +73,7 @@ public class BPlusTreeReducer {
             }
 
             // Define path for HDFS storage
-            String path = "/bplustree/" + key.toString() + "/tree_serialized_" + UUID.randomUUID();
+            String path = "/listTree/" + key.toString() + "/tree_serialized_" + UUID.randomUUID();
 
             // Save serialized B+ Tree to HDFS
             Configuration conf = context.getConfiguration();
