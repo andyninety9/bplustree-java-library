@@ -30,6 +30,8 @@ public class MetadataSearcher {
         String metadataPath = args[1];
         String outputPath = args[2];
 
+        long startTime = System.currentTimeMillis(); // Bắt đầu tính thời gian
+
         try {
             // Parse search key
             int searchKey = Integer.parseInt(searchKeyArg);
@@ -57,14 +59,18 @@ public class MetadataSearcher {
                 }
             }
 
+            long endTime = System.currentTimeMillis(); // Kết thúc tính thời gian
+            long executionTime = endTime - startTime;
+
             // Save result to HDFS
-            saveSearchResult(isFound, matchedSubtrees, outputPath);
+            saveSearchResult(isFound, matchedSubtrees, searchKey, executionTime, outputPath);
             logger.info("Search result saved to: {}", outputPath);
 
         } catch (Exception e) {
             logger.error("Error during metadata search process", e);
         }
     }
+
 
     private static BPlusTree<Integer> readSubtreeFromHDFS(String path) throws Exception {
         Configuration conf = new Configuration();
@@ -93,26 +99,33 @@ public class MetadataSearcher {
         }
     }
 
-    private static void saveSearchResult(boolean isFound, List<SubtreeMetadata> matchedSubtrees, String outputPath) throws Exception {
+    private static void saveSearchResult(boolean isFound, List<SubtreeMetadata> matchedSubtrees, int searchKey, long executionTime, String outputPath) throws Exception {
         Configuration conf = new Configuration();
         FileSystem fs = FileSystem.get(conf);
         Path path = new Path(outputPath);
 
-        SearchResult result = new SearchResult(isFound, matchedSubtrees);
+        SearchResult result = new SearchResult(isFound, matchedSubtrees, searchKey, executionTime);
 
         try (OutputStream outputStream = fs.create(path, true)) {
             ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.writeValue(outputStream, result);
+            // Cấu hình pretty-print cho JSON
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputStream, result);
         }
     }
+
+
 
     private static class SearchResult {
         private boolean found;
         private List<SubtreeMetadata> subtrees;
+        private int searchKey; // Giá trị người dùng cần tìm
+        private long executionTime; // Thời gian thực hiện tìm kiếm (milliseconds)
 
-        public SearchResult(boolean found, List<SubtreeMetadata> subtrees) {
+        public SearchResult(boolean found, List<SubtreeMetadata> subtrees, int searchKey, long executionTime) {
             this.found = found;
             this.subtrees = subtrees;
+            this.searchKey = searchKey;
+            this.executionTime = executionTime;
         }
 
         public boolean isFound() {
@@ -122,7 +135,16 @@ public class MetadataSearcher {
         public List<SubtreeMetadata> getSubtrees() {
             return subtrees;
         }
+
+        public int getSearchKey() {
+            return searchKey;
+        }
+
+        public long getExecutionTime() {
+            return executionTime;
+        }
     }
+
 }
 
 
