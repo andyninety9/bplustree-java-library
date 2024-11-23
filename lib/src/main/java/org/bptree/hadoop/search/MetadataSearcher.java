@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.spark.sql.SparkSession;
 import org.bptree.BPlusTree;
 import org.bptree.hadoop.models.SubtreeMetadata;
 import org.bptree.hadoop.utils.MetadataReader;
@@ -32,7 +33,14 @@ public class MetadataSearcher {
 
         long startTime = System.currentTimeMillis(); // Bắt đầu tính thời gian
 
+        SparkSession spark = null;
         try {
+            // Khởi tạo SparkSession
+            spark = SparkSession.builder()
+                    .appName("Metadata Searcher")
+                    .getOrCreate();
+            logger.info("SparkSession initialized successfully.");
+
             // Parse search key
             int searchKey = Integer.parseInt(searchKeyArg);
             logger.info("Parsed search key: {}", searchKey);
@@ -66,8 +74,15 @@ public class MetadataSearcher {
             saveSearchResult(isFound, matchedSubtrees, searchKey, executionTime, outputPath);
             logger.info("Search result saved to: {}", outputPath);
 
+        } catch (NumberFormatException e) {
+            logger.error("Invalid search key format: {}. Must be an integer.", searchKeyArg, e);
         } catch (Exception e) {
             logger.error("Error during metadata search process", e);
+        } finally {
+            if (spark != null) {
+                spark.stop();
+                logger.info("SparkSession stopped.");
+            }
         }
     }
 
