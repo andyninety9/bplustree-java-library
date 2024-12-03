@@ -1,7 +1,7 @@
 /*
  * build.gradle.kts for the B+ Tree Library with integrated Hadoop and Spark support.
  * This configuration includes dependencies for Hadoop, Spark, Jackson for JSON processing,
- * and configurations for creating a fat JAR using the Shadow plugin.
+ * Apache Commons Math for statistical operations, and configurations for creating a fat JAR using the Shadow plugin.
  */
 
 plugins {
@@ -37,6 +37,9 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
     implementation("com.fasterxml.jackson.core:jackson-core:2.13.3")
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.13.3")
+
+    // Apache Commons Math for statistical operations
+    implementation("org.apache.commons:commons-math3:3.6.1")
 }
 
 java {

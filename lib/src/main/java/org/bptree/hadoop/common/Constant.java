@@ -8,22 +8,22 @@ public interface Constant {
     /**
      * Maximum value for partition 1.
      */
-    long MAX_PARTITION1 = 17469497;
+    long MAX_PARTITION1 = 174786325;
 
     /**
      * Maximum value for partition 2.
      */
-    long MAX_PARTITION2 = 34951108;
+    long MAX_PARTITION2 = 349535431;
 
     /**
      * Maximum value for partition 3.
      */
-    long MAX_PARTITION3 = 52433869;
+    long MAX_PARTITION3 = 524272540;
 
     /**
      * Maximum value for partition 4.
      */
-    long MAX_PARTITION4 = 69920921;
+    long MAX_PARTITION4 = 699000133;
 
     /**
      * Key identifier for partition 1.
