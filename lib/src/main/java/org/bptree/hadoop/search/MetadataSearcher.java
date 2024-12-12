@@ -31,8 +31,8 @@ public class MetadataSearcher {
         String metadataPath = args[1];
         String outputPath = args[2];
 
-        long startTime = System.currentTimeMillis(); // Bắt đầu tính thời gian
-
+        long startTimeTotal = System.currentTimeMillis();
+        // Khởi tạo SparkSession
         SparkSession spark = null;
         try {
             // Khởi tạo SparkSession
@@ -55,6 +55,9 @@ public class MetadataSearcher {
                     .collect(Collectors.toList());
             logger.info("Matched Subtrees: {}", matchedSubtrees);
 
+            // Start timing the search process (exclude Spark setup and metadata loading)
+            long startTime = System.currentTimeMillis(); // Start timing the search process
+
             // Search in each subtree
             boolean isFound = false;
             for (SubtreeMetadata subtreeMetadata : matchedSubtrees) {
@@ -67,11 +70,12 @@ public class MetadataSearcher {
                 }
             }
 
-            long endTime = System.currentTimeMillis(); // Kết thúc tính thời gian
-            long executionTime = endTime - startTime;
-
+            // End timing the search process
+            long endTime = System.currentTimeMillis(); // End timing
+            long executionTime = endTime - startTime; // Time for search operation only
+            long totalJobExcutionTime = endTime - startTimeTotal; // Total time for the job
             // Save result to HDFS
-            saveSearchResult(isFound, matchedSubtrees, searchKey, executionTime, outputPath);
+            saveSearchResult(isFound, matchedSubtrees, searchKey, executionTime, outputPath, totalJobExcutionTime);
             logger.info("Search result saved to: {}", outputPath);
 
         } catch (NumberFormatException e) {
@@ -85,7 +89,6 @@ public class MetadataSearcher {
             }
         }
     }
-
 
     private static BPlusTree<Integer> readSubtreeFromHDFS(String path) throws Exception {
         Configuration conf = new Configuration();
@@ -114,12 +117,12 @@ public class MetadataSearcher {
         }
     }
 
-    private static void saveSearchResult(boolean isFound, List<SubtreeMetadata> matchedSubtrees, int searchKey, long executionTime, String outputPath) throws Exception {
+    private static void saveSearchResult(boolean isFound, List<SubtreeMetadata> matchedSubtrees, int searchKey, long executionTime, String outputPath, long totalJobExcutionTime) throws Exception {
         Configuration conf = new Configuration();
         FileSystem fs = FileSystem.get(conf);
         Path path = new Path(outputPath);
 
-        SearchResult result = new SearchResult(isFound, matchedSubtrees, searchKey, executionTime);
+        SearchResult result = new SearchResult(isFound, matchedSubtrees, searchKey, executionTime, totalJobExcutionTime);
 
         try (OutputStream outputStream = fs.create(path, true)) {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -128,19 +131,19 @@ public class MetadataSearcher {
         }
     }
 
-
-
     private static class SearchResult {
         private boolean found;
         private List<SubtreeMetadata> subtrees;
         private int searchKey; // Giá trị người dùng cần tìm
         private long executionTime; // Thời gian thực hiện tìm kiếm (milliseconds)
+        private long totalJobExcutionTime;
 
-        public SearchResult(boolean found, List<SubtreeMetadata> subtrees, int searchKey, long executionTime) {
+        public SearchResult(boolean found, List<SubtreeMetadata> subtrees, int searchKey, long executionTime, long totalJobExcutionTime) {
             this.found = found;
             this.subtrees = subtrees;
             this.searchKey = searchKey;
             this.executionTime = executionTime;
+            this.totalJobExcutionTime = totalJobExcutionTime;
         }
 
         public boolean isFound() {
@@ -158,10 +161,9 @@ public class MetadataSearcher {
         public long getExecutionTime() {
             return executionTime;
         }
+
+        public long getTotalJobExcutionTime() {
+            return totalJobExcutionTime;
+        }
     }
-
 }
-
-
-
-

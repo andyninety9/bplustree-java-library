@@ -20,7 +20,7 @@ public class HandleKSTest {
     private static final double RATE_INCREMENT = 0.1; // Increment for sampling rate in each iteration
 
     public static void main(String[] args) {
-        String filePath = "lib/src/test/resources/dataset/dataset_100mb.csv"; // Path to dataset
+        String filePath = "lib/src/test/resources/dataset/dataset_10mb.csv"; // Path to dataset
         int columnIndex = 0; // Index of the column to analyze
         int numPartitions = 5; // Number of partitions for sampling
 

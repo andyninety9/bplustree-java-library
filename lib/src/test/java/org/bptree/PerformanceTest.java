@@ -1,16 +1,13 @@
 package org.bptree;
 
 import org.bptree.utils.FileUtils;
-import org.bptree.utils.SortUtils;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,8 +16,6 @@ public class PerformanceTest {
 
     // Path to the dataset (relative to src/test/resources)
     private static final String DATASET_PATH = "/dataset/dataset_300mb.csv";
-    private static final int TREE_ORDER = 150;  // Order of the BPlusTree
-
     private static List<Long> keys;  // Store the dataset keys for all tests
 
     /**
@@ -48,33 +43,29 @@ public class PerformanceTest {
     }
 
     /**
-     * Test to measure the performance of sorting and tree construction separately.
+     * Function to count the number of elements in a CSV file
      */
-    @Disabled
+    public static long countElementsInCSV(String filePath) throws IOException {
+        // Read the CSV file using FileUtils
+        List<String[]> csvData = FileUtils.readCSV(filePath, ",");
+        return csvData.size();
+    }
+
+    /**
+     * Test the number of elements in the dataset
+     */
     @Test
-    public void testSortAndBottomUpPerformance() throws InterruptedException, ExecutionException {
-        // Step 1: Measure the time for sorting the keys
-        long sortStartTime = System.nanoTime();
-        List<Long> sortedKeys = SortUtils.mergeSort(keys);  // Sort the keys
-        long sortEndTime = System.nanoTime();
+    public void testCountElementsInDataset() throws IOException, URISyntaxException {
+        // Step 1: Convert resource path to absolute file path
+        String absolutePath = Paths.get(
+                PerformanceTest.class.getResource(DATASET_PATH).toURI()
+        ).toString();
 
-        long sortDurationMillis = (sortEndTime - sortStartTime) / 1_000_000;
-        System.out.println("Sorting took: " + sortDurationMillis + " ms");
+        // Step 2: Count the elements in the CSV file
+        long elementCount = countElementsInCSV(absolutePath);
 
-        // Step 2: Create a BPlusTree with the specified order
-        BPlusTree<Long> bplusTree = new BPlusTree<>(TREE_ORDER);
-
-        // Step 3: Measure the time for bottom-up tree construction
-        long buildStartTime = System.nanoTime();
-        bplusTree.bottom_up_method(sortedKeys);  // Build the tree
-        long buildEndTime = System.nanoTime();
-
-        long buildDurationMillis = (buildEndTime - buildStartTime) / 1_000_000;
-        System.out.println("Bottom-up tree construction took: " + buildDurationMillis + " ms");
-
-        // Step 4: Validate the tree structure
-        assertNotNull(bplusTree.getRoot(), "The root node should not be null.");
-        assertTrue(bplusTree.getHeight() > 0, "The tree height should be greater than 0.");
-        System.out.println("Tree height: " + bplusTree.getHeight());
+        // Step 3: Assert that the dataset contains elements
+        assertTrue(elementCount > 0, "The dataset should contain at least one element.");
+        System.out.println("The number of elements in the dataset: " + elementCount);
     }
 }
