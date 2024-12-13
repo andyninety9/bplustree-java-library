@@ -1,12 +1,17 @@
 package org.bptree.hadoop.reducer;
 
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.conf.Configuration;
 import org.bptree.BPlusTree;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -33,72 +38,71 @@ public class BPlusTreeReducer {
          * @param context the Hadoop Context for writing results and tracking job progress.
          */
         @Override
-        public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-            // Collect all values for the given partition key
+        public void reduce(Text key, Iterable<IntWritable> values, Context context)
+                throws IOException, InterruptedException {
+
+            // Collect all values and track statistics in one pass
             List<Integer> valueList = new ArrayList<>();
+            int minValue = Integer.MAX_VALUE;
+            int maxValue = Integer.MIN_VALUE;
+
             for (IntWritable value : values) {
-                valueList.add(value.get());
+                int currentValue = value.get();
+                valueList.add(currentValue);
+                minValue = Math.min(minValue, currentValue);
+                maxValue = Math.max(maxValue, currentValue);
             }
 
-            // Skip processing if there are no values for the given key
+            // Skip processing if there are no values
             if (valueList.isEmpty()) {
                 System.err.println("No values for key: " + key.toString());
                 return;
             }
 
-            // Initialize a B+ Tree instance and build it using the bottom-up method
+            // Build B+ Tree with all sorted values
             BPlusTree<Integer> bPlusTree = new BPlusTree<>(B_PLUS_TREE_ORDER);
             try {
-                // Build the B+ Tree from the collected values
                 bPlusTree.bottom_up_method(valueList);
             } catch (ExecutionException e) {
-                // Handle errors that occur during tree construction
                 System.err.println("Error building B+ Tree for key: " + key.toString() + " - " + e.getMessage());
                 throw new RuntimeException("Failed to build B+ Tree", e);
             }
 
-            // Calculate minimum and maximum values in the current partition
-            int minValue = valueList.stream().min(Integer::compareTo).orElse(Integer.MIN_VALUE);
-            int maxValue = valueList.stream().max(Integer::compareTo).orElse(Integer.MAX_VALUE);
-
-            // Commenting out serialization step
-            /*
-            // Serialize the B+ Tree into a byte array for storage
+            // Serialize the tree
             byte[] serializedTree;
             try {
-                // Convert the B+ Tree object into a byte array
                 serializedTree = serializeBPlusTree(bPlusTree);
+                if (serializedTree == null) {
+                    throw new IOException("Serialization returned null for key: " + key.toString());
+                }
             } catch (IOException e) {
-                // Handle serialization errors
                 System.err.println("Serialization failed for B+ Tree with key: " + key.toString() + " - " + e.getMessage());
                 e.printStackTrace();
                 throw new IOException("Failed to serialize B+ Tree for key: " + key.toString(), e);
             }
-            */
 
-            // Define a path for HDFS storage (intentionally leaving the path empty for this requirement)
-            String path = ""; // The path field is intentionally left empty
-
-            // Commenting out HDFS write step
-            /*
-            // Save the serialized B+ Tree to HDFS
+            // Save to HDFS with unique filename
+            String treePath = "/listTree/" + key.toString() + "/tree_serialized_" + UUID.randomUUID();
             Configuration conf = context.getConfiguration();
             FileSystem fs = FileSystem.get(conf);
-            try (FSDataOutputStream outputStream = fs.create(new Path("/listTree/" + key.toString() + "/tree_serialized_" + UUID.randomUUID()))) {
-                // Write the serialized B+ Tree to HDFS
+
+            try (FSDataOutputStream outputStream = fs.create(new Path(treePath))) {
                 outputStream.write(serializedTree);
             } catch (IOException e) {
-                // Handle errors during HDFS write operations
                 System.err.println("Failed to write B+ Tree to HDFS for key: " + key.toString() + " - " + e.getMessage());
                 e.printStackTrace();
                 throw new IOException("Failed to write serialized B+ Tree to HDFS", e);
             }
-            */
 
-            // Write metadata to the Hadoop context with an empty Path field
-            context.write(new Text("B+ Tree stored for key " + key.toString()),
-                    new Text("Path: " + path + ", Min: " + minValue + ", Max: " + maxValue +
-                            ", Height: " + bPlusTree.getHeight() + ", Elements: " + valueList.size()));
+            // Write metadata to context
+            context.write(
+                    new Text("B+ Tree stored for key " + key.toString()),
+                    new Text("Path: " + treePath +
+                            ", Min: " + minValue +
+                            ", Max: " + maxValue +
+                            ", Height: " + bPlusTree.getHeight() +
+                            ", Elements: " + valueList.size())
+            );
         }
 
         /**
@@ -109,22 +113,16 @@ public class BPlusTreeReducer {
          * @throws IOException if an I/O error occurs during serialization
          */
         private byte[] serializeBPlusTree(BPlusTree<Integer> bPlusTree) throws IOException {
-            // Serialization logic is commented out as it is not needed in this case
-            /*
             try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                  ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
-                // Serialize the B+ Tree object into the byte array
                 objectOutputStream.writeObject(bPlusTree);
-                objectOutputStream.flush(); // Ensure all data is written
+                objectOutputStream.flush();
                 return byteArrayOutputStream.toByteArray();
             } catch (IOException e) {
-                // Handle errors during serialization
                 System.err.println("Error serializing B+ Tree: " + e.getMessage());
                 e.printStackTrace();
                 throw new IOException("Failed to serialize B+ Tree", e);
             }
-            */
-            return null; // Return null as serialization is skipped
         }
     }
 }
