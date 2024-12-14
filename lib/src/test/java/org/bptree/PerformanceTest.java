@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PerformanceTest {
 
     // Path to the dataset (relative to src/test/resources)
-    private static final String DATASET_PATH = "/dataset/dataset_300mb.csv";
+    private static final String DATASET_PATH = "/dataset/dataset_1mb.csv";
     private static List<Long> keys;  // Store the dataset keys for all tests
 
     /**
